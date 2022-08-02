@@ -73,7 +73,7 @@ def atc_go_version(unused_typ: str,
 # -- Issue role --------------------------------------------------------------
 from docutils import utils
 
-ISSUE_URI = REPO_URI + "issues/%s"
+ISSUE_URI = f"{REPO_URI}issues/%s"
 
 def issue_role(unused_typ,
                unused_rawtext,
@@ -88,12 +88,12 @@ def issue_role(unused_typ,
 		content = []
 
 	issue = utils.unescape(text)
-	text = 'Issue #' + issue
+	text = f'Issue #{issue}'
 	refnode = nodes.reference(text, text, refuri=ISSUE_URI % issue)
 	return [refnode], []
 
 # -- Pull Request Role -------------------------------------------------------
-PR_URI = REPO_URI + "pull/%s"
+PR_URI = f"{REPO_URI}pull/%s"
 
 def pr_role(unused_typ,
             unused_rawtext,
@@ -108,12 +108,12 @@ def pr_role(unused_typ,
 		content = []
 
 	pr = utils.unescape(text)
-	text = 'Pull Request ' + pr
+	text = f'Pull Request {pr}'
 	refnode = nodes.reference(text, text, refuri=PR_URI % pr)
 	return [refnode], []
 
 # -- ATC file role -----------------------------------------------------------
-FILE_URI = REPO_URI + "tree/master/%s"
+FILE_URI = f"{REPO_URI}tree/master/%s"
 def atc_file_role(unused_typ,
                   unused_rawtext,
                   text,
@@ -149,7 +149,7 @@ def godoc_role(unused_typ,
 	litnode = nodes.literal(text, text)
 	last_period_index = text.rfind('.')
 	if last_period_index != -1 and text.rfind('/') < last_period_index:
-		text = text[:last_period_index] + '#' + text[last_period_index + 1:]
+		text = f'{text[:last_period_index]}#{text[last_period_index + 1:]}'
 	refnode = nodes.reference(text, '', litnode, refuri=GODOC_URI + text)
 	return [refnode], []
 
@@ -175,7 +175,7 @@ def atc_godoc_role(unused_typ,
 	return [refnode], []
 
 # -- GoDoc role (to-relative) -----------------------------------------------
-TO_GODOC_PREFIX = ATC_GODOC_PREFIX + "traffic_ops/traffic_ops_golang/"
+TO_GODOC_PREFIX = f"{ATC_GODOC_PREFIX}traffic_ops/traffic_ops_golang/"
 TO_GODOC_URI = GODOC_URI + TO_GODOC_PREFIX
 def to_godoc_role(unused_typ,
                   unused_rawtext,

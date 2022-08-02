@@ -92,8 +92,11 @@ class GoPRMaker:
 			'sha': sha,
 		}
 		requester.requestJsonAndCheck(
-			'PATCH', self.repo.url + f'/git/refs/heads/{branch_name}', input=patch_parameters
+			'PATCH',
+			f'{self.repo.url}/git/refs/heads/{branch_name}',
+			input=patch_parameters,
 		)
+
 		return
 
 	def run(self, update_version_only: bool = False) -> None:
@@ -143,7 +146,7 @@ class GoPRMaker:
 
 	@staticmethod
 	def get_major_version(from_go_version: str) -> str:
-		return re.search(pattern=r'^\d+\.\d+', string=from_go_version).group(0)
+		return re.search(pattern=r'^\d+\.\d+', string=from_go_version)[0]
 
 	def get_latest_major_upgrade(self, from_go_version: str) -> str:
 		major_version = self.get_major_version(from_go_version)
@@ -156,7 +159,7 @@ class GoPRMaker:
 			if not go_version_content[index]['stable']:
 				continue
 			go_version_name: str = go_version_content[index]['version']
-			fetched_go_version = re.search(pattern=r'[\d.]+', string=go_version_name).group(0)
+			fetched_go_version = re.search(pattern=r'[\d.]+', string=go_version_name)[0]
 			if major_version == self.get_major_version(fetched_go_version):
 				break
 			index += 1
@@ -166,12 +169,10 @@ class GoPRMaker:
 		return fetched_go_version
 
 	def get_repo_name(self) -> str:
-		repo_name: str = self.getenv(ENV_GITHUB_REPOSITORY)
-		return repo_name
+		return self.getenv(ENV_GITHUB_REPOSITORY)
 
 	def get_repo_owner(self) -> str:
-		repo_name: str = self.getenv(ENV_GITHUB_REPOSITORY_OWNER)
-		return repo_name
+		return self.getenv(ENV_GITHUB_REPOSITORY_OWNER)
 
 	def get_go_milestone(self, go_version: str) -> str:
 		go_repo: Repository = self.get_repo(GO_REPO_NAME)
@@ -198,11 +199,10 @@ class GoPRMaker:
 			re.MULTILINE | re.DOTALL)
 		if release_notes_matches is None:
 			raise Exception(f'Could not find release notes on {RELEASE_PAGE_URL}')
-		release_notes = re.sub(r'[\s\t]+', ' ', release_notes_matches.group(0))
-		return release_notes
+		return re.sub(r'[\s\t]+', ' ', release_notes_matches[0])
 
 	def get_pr_body(self, go_version: str, milestone_url: str) -> str:
-		with open(os.path.dirname(__file__) + '/pr_template.md') as file:
+		with open(f'{os.path.dirname(__file__)}/pr_template.md') as file:
 			pr_template = file.read()
 		go_major_version = self.get_major_version(go_version)
 
@@ -261,7 +261,7 @@ class GoPRMaker:
 			tree_element: InputGitTreeElement = InputGitTreeElement(path=file, mode='100644',
 				type='blob', content=content)
 			tree_elements.append(tree_element)
-		if len(tree_elements) == 0:
+		if not tree_elements:
 			print('No golang.org/x/ dependencies need to be updated.')
 			return
 		tree_hash = subprocess.check_output(

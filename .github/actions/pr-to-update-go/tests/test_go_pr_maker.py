@@ -25,7 +25,7 @@ class TestGoPRMaker(TestCase):
 
 	def test_get_release_notes(self) -> None:
 		go_version: str = '4.15.6'
-		expected_release_notes: str = f'<p> go4.15.6 The expected release notes </p>'
+		expected_release_notes: str = '<p> go4.15.6 The expected release notes </p>'
 		release_notes_with_whitespace: str = f"""<p>  
                 go{go_version} The expected release notes
             </p>"""

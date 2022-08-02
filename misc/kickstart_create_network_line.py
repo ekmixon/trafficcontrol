@@ -19,6 +19,7 @@
     network links in /sys/class/net/*, then emits a ks.cfg network line.
     '''
 
+
 from __future__ import print_function
 import os
 import re
@@ -56,7 +57,7 @@ cfg_line = re.compile("\s*(?P<key>.*?)=(?P<value>.*)\s*$")
 
 iface_speed = 'auto'
 
-restring = iface_dir + "(?P<iface>.*)/speed"
+restring = f"{iface_dir}(?P<iface>.*)/speed"
 iface_search = re.compile(restring)
 
 
@@ -87,7 +88,6 @@ def find_usable_net_devs(location):
     devs = os.listdir(location)
     for dev in devs:
         dev_path = os.path.join(location,dev,'speed')
-        add=True
         if os.path.isfile(dev_path):
             with open(dev_path,'r') as iface:
                 try:
@@ -102,9 +102,7 @@ def find_usable_net_devs(location):
         # return a 65535. Those we set to 0 as well.
         if speed == 65535:
             speed = 0
-        for i_face in ignore_interfaces:
-            if i_face in dev:
-                add = False
+        add = all(i_face not in dev for i_face in ignore_interfaces)
         if speed  <= 0:
             add = False
         if TO_LOG:
@@ -156,10 +154,8 @@ def useable_interfaces(net_devs, nc, iface_speed):
             if TO_LOG:
                 print("inner else")
             for speed in net_devs:
-                if nc['BOND_DEVICE'] in net_devs[speed]:
-                    iface_list = [nc['BOND_DEVICE']]
-                else:
-                    iface_list = [nc['BOND_DEVICE']]
+                iface_list = [nc['BOND_DEVICE']]
+                if nc['BOND_DEVICE'] not in net_devs[speed]:
                     notes = "{0} did not have carrier at install time, and may not work".format(nc['BOND_DEVICE'])
     elif iface_speed != 'auto':
         if len(net_devs[iface_speed]) > 0:
@@ -170,7 +166,7 @@ def useable_interfaces(net_devs, nc, iface_speed):
         #  if not it is anyway.
         # Thus we are doing a bond of some sort.
         # This gives us the fastest interfaces first:
-        speeds = [k for k in sorted(net_devs.keys(), reverse=True)]
+        speeds = list(sorted(net_devs.keys(), reverse=True))
         fastest = speeds[0]
         # Walk through "speeds" and take the first one that has more than one
         # interface. This will only set iface_list if there are 2 or more interfaces:
@@ -235,7 +231,7 @@ if bondable_iface and len(bondable_iface) > 1:
     dev_list = bondable_iface
     dev_str = dev_list.pop()
     for d in dev_list:
-        dev_str = dev_str + "," + d
+        dev_str = f"{dev_str},{d}"
 else:
     dev_str = bondable_iface[0]
 

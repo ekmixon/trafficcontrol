@@ -39,9 +39,7 @@ class AnsibleInventory():
 	@staticmethod
 	def populate_server_profile_vars(api, profile_id):
 		"""Generate the server profile variables once as we see it"""
-		server_vars = {}
-		server_vars['hosts'] = []
-		server_vars['vars'] = {}
+		server_vars = {'hosts': [], 'vars': {}}
 		profile = api.get_profiles(id=profile_id)[0]
 		server_vars['vars']['server_profile_description'] = profile[0]['description']
 		server_vars['vars']['server_profile_type'] = profile[0]['type']
@@ -59,35 +57,34 @@ class AnsibleInventory():
 	@staticmethod
 	def populate_cachegroups(api, cachegroup_id):
 		"""Generate the values for cachegroups once on first sight"""
-		var_data = {}
 		cgdata = collections.namedtuple(
 			'Cgdata', [
 				'cgvars', 'primary_parent_group_name', 'secondary_parent_group_name'])
-		var_data['hosts'] = []
-		var_data['vars'] = {}
+		var_data = {'hosts': [], 'vars': {}}
 		cachegroup = api.get_cachegroups(id=cachegroup_id)[0]
 		var_data['vars']['cachegroup_name'] = cachegroup[0]['name']
 		var_data['vars']['cachegroup_shortName'] = cachegroup[0]['shortName']
 		var_data['vars']['cachegroup_parentCachegroupName'] = \
-			cachegroup[0]['parentCachegroupName']
+				cachegroup[0]['parentCachegroupName']
 		var_data['vars']['cachegroup_secondaryParentCachegroupName'] = \
-			cachegroup[0]['secondaryParentCachegroupName']
+				cachegroup[0]['secondaryParentCachegroupName']
 		var_data['vars']['cachegroup_typeName'] = cachegroup[0]['typeName']
 		if cachegroup[0]['parentCachegroupName'] is None:
 			flat_parent_cg = "parentCachegroup|None"
 		else:
 			flat_parent_cg = "parentCachegroup|" + \
-				cachegroup[0]['parentCachegroupName']
+					cachegroup[0]['parentCachegroupName']
 
 		if cachegroup[0]['secondaryParentCachegroupName'] is None:
 			flat_second_parent_cg = "secondaryParentCachegroup|None"
 		else:
 			flat_second_parent_cg = "secondaryParentCachegroup|" + \
-				cachegroup[0]['secondaryParentCachegroupName']
-		out = cgdata(cgvars=var_data,
-                    primary_parent_group_name=flat_parent_cg,
-                    secondary_parent_group_name=flat_second_parent_cg)
-		return out
+					cachegroup[0]['secondaryParentCachegroupName']
+		return cgdata(
+			cgvars=var_data,
+			primary_parent_group_name=flat_parent_cg,
+			secondary_parent_group_name=flat_second_parent_cg,
+		)
 
 	def generate_inventory_list(self, target_to):
 		"""Generate the inventory list for the specified TrafficOps instance"""

@@ -25,9 +25,7 @@ if len(sys.argv) < 3 or len(sys.argv) > 4:
 
 cdn_csv_list = sys.argv[1].split(',')
 fqdn_csv_list = sys.argv[2].split(',')
-option = ''
-if len(sys.argv) == 4:
-	option = sys.argv[3]
+option = sys.argv[3] if len(sys.argv) == 4 else ''
 cdn_csv_list.sort()
 fqdn_csv_list.sort()
 

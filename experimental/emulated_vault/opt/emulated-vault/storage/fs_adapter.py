@@ -136,7 +136,7 @@ class FsAdapter(AdapterBase):
 			if not success:
 				self.logger.error("%s parameter os path not found.", fileName)
 				return False, None
-				
+
 			parameters[parameterUrlPath] = value
 
 		return True, parameters

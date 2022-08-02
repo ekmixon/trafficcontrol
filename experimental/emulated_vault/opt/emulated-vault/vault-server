@@ -131,9 +131,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 			def cdnFilter(key,val):
 				try:
 					data = json.loads(val)
-					return data['cdn']==cdnFind.group(1)
+					return data['cdn'] == cdnFind[1]
 				except Exception as e:
 					return False
+
 			filters['cdn'] = cdnFilter
 
 		dsFind = re.search(".*q=deliveryservice:([^&]*).*", parsed_path.query)
@@ -141,14 +142,18 @@ class RequestHandler(BaseHTTPRequestHandler):
 			def dsFilter(key,val):
 				try:
 					data = json.loads(val)
-					return data['deliveryservice']==dsFind.group(1)
+					return data['deliveryservice'] == dsFind[1]
 				except Exception as e:
 					return False
+
 			filters['ds'] = dsFilter
 
 		keyFind = re.search(".*q=_yz_rk:([^&]*).*", parsed_path.query)
 		if keyFind:
-			keyFilters['key-match'] = lambda key: fnmatch.fnmatch(os.path.basename(key), keyFind.group(1))
+			keyFilters['key-match'] = lambda key: fnmatch.fnmatch(
+				os.path.basename(key), keyFind[1]
+			)
+
 
 		success, parameters = db.searchParameters("/riak/ssl/", keyFilters=keyFilters, filters=filters)
 		if not success:
@@ -205,7 +210,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 		#mimic vault beahvior
 		if parsed_path.path.startswith('/riak/ssl/'):
 			certificate_data = data.get('certificate', {})
-			data.update({"certificate.%s"%key: value for key, value in certificate_data.items()})
+			data.update(
+				{f"certificate.{key}": value for key, value in certificate_data.items()}
+			)
+
 		success = db.setParameter(parsed_path.path, json.dumps(data))
 		if not success:
 			self.send_response(503)

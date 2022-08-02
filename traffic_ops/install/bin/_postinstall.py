@@ -129,7 +129,7 @@ class Question(object):
 		hddn = self.hidden
 		return "Question(question='{qstn}', default='{ans}', config_var='{cfgvr}', hidden={hddn})".format(qstn=qstn, ans=ans, cfgvr=cfgvr, hddn=hddn)
 
-	def ask(self): # type: () -> str
+	def ask(self):	# type: () -> str
 		"""
 		Asks the user the Question interactively.
 
@@ -144,7 +144,7 @@ class Question(object):
 					return passwd
 				print("Error: passwords do not match, try again")
 		ipt = input(self)
-		return ipt if ipt else self.default
+		return ipt or self.default
 
 	def to_json(self): # type: () -> str
 		"""
@@ -369,7 +369,7 @@ def generate_todb_conf(fname, root, conf): # (str, str, dict)
 		print("    driver:", driver, file=conf_file)
 		print("    open: {open_line} sslmode=disable".format(open_line=open_line), file=conf_file)
 
-def generate_ldap_conf(questions, fname, automatic, root): # type: (list[Question], str, bool, str) -> None
+def generate_ldap_conf(questions, fname, automatic, root):	# type: (list[Question], str, bool, str) -> None
 	"""
 	Generates the ldap.conf file by asking the questions or using default answers in auto mode.
 
@@ -412,8 +412,7 @@ def generate_ldap_conf(questions, fname, automatic, root): # type: (list[Questio
 	try:
 		os.makedirs(os.path.dirname(path))
 	except OSError as e:
-		if e.errno == errno.EEXIST:
-			pass
+		pass
 	with open(path, 'w+') as conf_file:
 		json.dump(ldap_conf, conf_file, indent=indent)
 		print(file=conf_file)
@@ -456,12 +455,17 @@ class Scrypt:
 		block = list(unpack(pack_format, salt))  # type: list[int]
 		block = self.ROMix(block)
 		salt = pack(pack_format, *block)
-		key = hashlib.pbkdf2_hmac('sha256', password=self.password, salt=salt, iterations=1, dklen=self.key_length)  # type: bytes
-		return key
+		return hashlib.pbkdf2_hmac(
+			'sha256',
+			password=self.password,
+			salt=salt,
+			iterations=1,
+			dklen=self.key_length,
+		)
 
 	def ROMix(self, block):  # type: (list[int]) -> list[int]
 		xored_block = [0] * len(block)  # type: list[int]
-		variations = [list()] * self.cost_factor  # type: list[list[int]]
+		variations = [[]] * self.cost_factor
 		variations[0] = block
 		index = 1
 		while index < self.cost_factor:
@@ -488,14 +492,17 @@ class Scrypt:
 				X[index] ^= previous_block[block_xor_index + index]
 			block_xor_index += X_length
 			self.salsa20(X)
-			block_offset = (int(octet_index / 2) + octet_index % 2 * self.block_size_factor) * X_length
+			block_offset = (
+				octet_index // 2 + octet_index % 2 * self.block_size_factor
+			) * X_length
+
 			block[block_offset:block_offset + X_length] = X
 			octet_index += 1
 		return block
 
 	def salsa20(self, block):  # type: (list[int]) -> None
 		X = block[:]  # make a copy (list.copy() is Python 3-only)
-		for i in range(0, 4):
+		for _ in range(4):
 			# These bit shifting operations could be condensed into a single line of list comprehensions,
 			# but there is a >3x performance benefit from writing it out explicitly.
 			bits = X[0] + X[12] & 0xffffffff
@@ -563,7 +570,7 @@ class Scrypt:
 			bits = X[14] + X[13] & 0xffffffff
 			X[15] ^= bits << 18 | bits >> 32 - 18
 
-		for index in range(0, 16):
+		for index in range(16):
 			block[index] = block[index] + X[index] & 0xffffffff
 
 

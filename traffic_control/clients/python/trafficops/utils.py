@@ -50,12 +50,10 @@ def log_with_debug_info(logging_level=logging.INFO, msg=u'', parent=False, separ
 	:rtype: Text
 	"""
 
-	frame,\
-	file_path,\
-	line_number,\
-	function_name,\
-	_,\
-	_ = inspect.stack()[1 if not parent else 2]
+	frame, file_path, line_number, function_name, _, _ = inspect.stack()[
+		2 if parent else 1
+	]
+
 	file_name = os.path.split(file_path)[-1]
 	calling_module = inspect.getmodule(frame).__name__
 	debug_msg = separator.join(map(str, (file_name, function_name, line_number, u' '))) + str(msg)

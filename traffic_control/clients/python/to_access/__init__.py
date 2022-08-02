@@ -188,25 +188,25 @@ def output(r, pretty, request_header, response_header, request_payload, indent =
 	if request_header:
 		print(r.request.method, r.request.path_url, "HTTP/1.1")
 		for h,v in r.request.headers.items():
-			print("%s:" % h, v)
+			print(f"{h}:", v)
 		print()
 
 	if request_payload and r.request.body:
 		try:
-			result = r.request.body if not pretty else json.dumps(json.loads(r.request.body))
+			result = json.dumps(json.loads(r.request.body)) if pretty else r.request.body
 		except ValueError:
 			result = r.request.body
 		print(result, end="\n\n")
 
 	if response_header:
 		print("HTTP/1.1", r.status_code, end="")
-		print(" "+r.reason if r.reason else "")
+		print(f" {r.reason}" if r.reason else "")
 		for h,v in r.headers.items():
-			print("%s:" % h, v)
+			print(f"{h}:", v)
 		print()
 
 	try:
-		result = r.text if not pretty else json.dumps(r.json(), indent=indent)
+		result = json.dumps(r.json(), indent=indent) if pretty else r.text
 	except ValueError:
 		result = r.text
 	print(result)
@@ -277,10 +277,14 @@ def parse_arguments(program):
 	                    action="store_true",
 	                    help=("Pretty-print payloads as JSON. "
 	                         "Note that this will make Content-Type headers \"wrong\", in general"))
-	parser.add_argument("-v", "--version",
-	                    action="version",
-	                    help="Print version information and exit",
-	                    version="%(prog)s v"+__version__)
+	parser.add_argument(
+		"-v",
+		"--version",
+		action="version",
+		help="Print version information and exit",
+		version=f"%(prog)s v{__version__}",
+	)
+
 	parser.add_argument("PATH", help="The path to the resource being requested - omit '/api/2.x'")
 	parser.add_argument("DATA",
 	                    help=("An optional data string to pass with the request. If this is a "
@@ -291,7 +295,7 @@ def parse_arguments(program):
 	args = parser.parse_args()
 
 	try:
-		to_host = args.to_url if args.to_url else os.environ["TO_URL"]
+		to_host = args.to_url or os.environ["TO_URL"]
 	except KeyError as e:
 		raise KeyError("Traffic Ops hostname not set! Set the TO_URL environment variable or use "\
 		               "'--to-url'.") from e
@@ -301,11 +305,7 @@ def parse_arguments(program):
 	useSSL = to_host.scheme.lower() == "https"
 	to_port = to_host.port
 	if to_port is None:
-		if useSSL:
-			to_port = 443
-		else:
-			to_port = 80
-
+		to_port = 443 if useSSL else 80
 	to_host = to_host.hostname
 	if not to_host:
 		raise KeyError(f"Invalid URL/host for Traffic Ops: '{original_to_host}'")
@@ -325,13 +325,13 @@ def parse_arguments(program):
 		data = data.encode()
 
 	try:
-		to_user = args.to_user if args.to_user else os.environ["TO_USER"]
+		to_user = args.to_user or os.environ["TO_USER"]
 	except KeyError as e:
 		raise KeyError("Traffic Ops user not set! Set the TO_USER environment variable or use "\
 		               "'--to-user'.") from e
 
 	try:
-		to_passwd = args.to_password if args.to_password else os.environ["TO_PASSWORD"]
+		to_passwd = args.to_password or os.environ["TO_PASSWORD"]
 	except KeyError as e:
 		raise KeyError("Traffic Ops password not set! Set the TO_PASSWORD environment variable or "\
 		               "use '--to-password'") from e
@@ -368,7 +368,7 @@ def request(method):
 	:returns: The program's exit code
 	"""
 	try:
-		s, path, data, full, raw, pretty = parse_arguments("to%s" % method)
+		s, path, data, full, raw, pretty = parse_arguments(f"to{method}")
 	except (PermissionError, KeyError, ConnectionError) as e:
 		print(e, file=sys.stderr)
 		return 1

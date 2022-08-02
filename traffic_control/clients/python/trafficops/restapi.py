@@ -415,29 +415,24 @@ class RestApiSession(object):
 				       u'appear to be valid JSON. Cause: {2}.')
 				msg = msg.format(response.status_code, endpoint, e)
 				if debug_response:
-					log_with_debug_info(logging.ERROR, msg + u' Data: [' + str(response.text) + u']')
+					log_with_debug_info(logging.ERROR, f'{msg} Data: [{str(response.text)}]')
 				raise InvalidJSONError(msg, resp=response)
 			msg = u'{0} request to RESTful API at [{1}] expected status(s) {2}; failed: {3} {4};'\
-			      u' Response: {5}'
+				      u' Response: {5}'
 			msg = msg.format(operation.upper(), endpoint, expected_status_codes,
 			                 response.status_code, response.reason, retdata)
 			log_with_debug_info(logging.ERROR, msg)
 			raise OperationError(msg, resp=response)
 
 		try:
-			if response.status_code in ('204',):
-				# "204 No Content"
-				retdata = {}
-			else:
-				# Decode the expected JSON
-				retdata = response.json()
+			retdata = {} if response.status_code in ('204',) else response.json()
 		except Exception as e:
 			# Invalid JSON payload.
 			msg = (u'HTTP Status Code: [{0}]; API response data for end-point [{1}] does not '
 			       u'appear to be valid JSON. Cause: {2}.')
 			msg = msg.format(response.status_code, endpoint, e)
 			if debug_response:
-				log_with_debug_info(logging.ERROR, msg + u' Data: [' + str(response.text) + u']')
+				log_with_debug_info(logging.ERROR, f'{msg} Data: [{str(response.text)}]')
 			raise InvalidJSONError(msg, resp=response)
 		retdata = munch.munchify(retdata) if munchify else retdata
 		return (retdata[u'response'] if u'response' in retdata else retdata), response

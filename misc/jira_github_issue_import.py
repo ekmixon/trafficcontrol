@@ -92,9 +92,9 @@ class GithubAPI(object):
                                                              self.api_key),
                             json=json_body)
         for (name, val) in rsp.headers.iteritems():
-            logging.debug("%s:%s" % (name, val))
+            logging.debug(f"{name}:{val}")
         logging.debug(json.dumps(rsp.json()))
-                          
+
         rsp.raise_for_status()
         if int(rsp.headers['X-RateLimit-Remaining']) == 0:
             wait_time = time.time() - int(rsp.headers['X-RateLimit-Reset'])
@@ -103,7 +103,7 @@ class GithubAPI(object):
 
         if use_abuse_delay:
             time.sleep(self.abuse_delay)
-            
+
         return rsp
         
     
@@ -113,8 +113,7 @@ class GithubIssues(GithubAPI):
 
         
     def create_issue(self, issue):
-        rsp = self.make_request("/issues", issue, use_abuse_delay=True)
-        return rsp
+        return self.make_request("/issues", issue, use_abuse_delay=True)
     
 
 class JiraIssueImporter(object):
@@ -128,9 +127,9 @@ class JiraIssueImporter(object):
 
         
     def collect_issues(self):
-        self.issue_list = list()
+        self.issue_list = []
         for item in self.root[0].findall('item'):
-            issue = dict()
+            issue = {}
             for field in field_names:
                 if field == "labels":
                     jira_list = item.find('labels').findall('label')
@@ -141,25 +140,34 @@ class JiraIssueImporter(object):
                         issue[field] = item.find(field).text
                     except AttributeError:
                         issue[field] = None
-                        logging.debug("Missing %s for item %s" % (field, item.find('title').text))
+                        logging.debug(f"Missing {field} for item {item.find('title').text}")
 
             self.issue_list.append(issue)
 
     def get_unique_values(self, field_name):
         ''' Iterates over issues and returns list of unqiue values in a field'''
-        vals = {str(x[field_name]) for x in self.issue_list if x[field_name] is not None}
-        return vals
+        return {
+            str(x[field_name])
+            for x in self.issue_list
+            if x[field_name] is not None
+        }
 
     
     def translate_issue_to_github(self, jira_issue):
         ''' Translate JIRA format to Github format'''
-        new_issue = {}
-        new_issue['title'] = jira_issue['title']
-        new_issue['body'] = "%s\n\nAuthor: %s\nJIRA Link: <a href=\"%s\">%s</a>" % \
-                            (jira_issue['description'],
-                             jira_issue['reporter'],
-                             jira_issue['link'],
-                             jira_issue['link'])
+        new_issue = {
+            'title': jira_issue['title'],
+            'body': (
+                "%s\n\nAuthor: %s\nJIRA Link: <a href=\"%s\">%s</a>"
+                % (
+                    jira_issue['description'],
+                    jira_issue['reporter'],
+                    jira_issue['link'],
+                    jira_issue['link'],
+                )
+            ),
+        }
+
         if jira_issue['version'] is not None:
             new_issue['body'] += "\nFound Version: %s" % (jira_issue['version'])
 
@@ -168,7 +176,7 @@ class JiraIssueImporter(object):
 
         if jira_issue['fixVersion'] is not None:
                 new_issue['milestone'] = milestone_map[jira_issue['fixVersion']]
-                
+
         new_issue['labels'] = jira_issue['labels']
         for extra_label in ['type', 'priority', 'component']:
             if jira_issue[extra_label] is not None:
@@ -177,11 +185,7 @@ class JiraIssueImporter(object):
 
     
     def translate_all_issues(self):
-        gh_issues = []
-        for i in self.issue_list:
-            gh_issues.append(self.translate_issue_to_github(i))
-            
-        return gh_issues
+        return [self.translate_issue_to_github(i) for i in self.issue_list]
 
 def list_all(importer):
     ''' Print list of unique values in JIRA fields'''
@@ -220,18 +224,17 @@ def main():
 
             
 def parse_command_line():
-  parser = argparse.ArgumentParser(description='Import JIRA issues from XML file into Github')
-  parser.add_argument('input_file', help='path to input XML file')
-  parser.add_argument('username', help='Github Username')
-  parser.add_argument('api_key', help='Github username/Personal Access Token')  
-  parser.add_argument('--list-all',
-                      action='store_true',
-                      help='List all issues and milestones in JIRA')
+    parser = argparse.ArgumentParser(description='Import JIRA issues from XML file into Github')
+    parser.add_argument('input_file', help='path to input XML file')
+    parser.add_argument('username', help='Github Username')
+    parser.add_argument('api_key', help='Github username/Personal Access Token')
+    parser.add_argument('--list-all',
+                        action='store_true',
+                        help='List all issues and milestones in JIRA')
 
 
-  args = parser.parse_args()
-  print "Reading input from: %s" % (args.input_file)  
-  return args    
+    parser = argparse.ArgumentParser(description='Import JIRA issues from XML file into Github')
+    return parser.parse_args()    
 
     
 if __name__ == '__main__':

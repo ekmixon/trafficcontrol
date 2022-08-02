@@ -230,10 +230,7 @@ class TOSession(RestApiSession):
 		limit = 10000
 		page = 1
 
-		munchify = True  # Default to True
-		if 'munchify' in kwargs:
-			munchify = kwargs['munchify']
-
+		munchify = kwargs.get('munchify', True)
 		while True:
 			data, resp = self.get_deliveryserviceserver(query_params={'limit':limit, 'page': page},
 			                                           *args, **kwargs)
@@ -2204,7 +2201,10 @@ if __name__ == '__main__':
 
 	DEBUG = False
 
-	logging.basicConfig(stream=sys.stderr, level=logging.INFO if not DEBUG else logging.DEBUG)
+	logging.basicConfig(
+		stream=sys.stderr, level=logging.DEBUG if DEBUG else logging.INFO
+	)
+
 
 	# TOSession Class Examples
 	#     TOSession is a class that allows you to create a session to a Traffic Ops instance

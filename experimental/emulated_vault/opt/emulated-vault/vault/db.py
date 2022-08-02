@@ -52,9 +52,7 @@ class Db(object):
 		:return: A tuple - 'True' for successful retrival and the retrieved value
 		:rtype: Tuple[bool, str]
 		"""
-		if self.storage_adaper.ping():
-			return (True, "OK")
-		return False, None
+		return (True, "OK") if self.storage_adaper.ping() else (False, None)
 
 	def getParameter(self, parameterUrlPath):
 		"""

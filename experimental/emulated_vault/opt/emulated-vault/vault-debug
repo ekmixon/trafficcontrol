@@ -78,7 +78,7 @@ def main():
 	fhm.setLevel(logging.INFO)
 	#TODO Set based on command line
 	verbose = logging.StreamHandler(sys.stdout)
-	verbose.setLevel(logging.INFO)   
+	verbose.setLevel(logging.INFO)
 	# create formatter and add it to the handlers
 	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 	fhm.setFormatter(formatter)
@@ -88,7 +88,7 @@ def main():
 	logger.addHandler(fhm)
 	logger.addHandler(fhd)
 	logger.addHandler(verbose)
-	
+
 	parser = optparse.OptionParser()
 	operationModeGroup = optparse.OptionGroup(parser, "Operation mode options",
 											  "The vault script may work in one of the following modes.")
@@ -128,7 +128,7 @@ def main():
 
 	if not storageAdapter.init_cfg(config):
 		logger.error("Failed storage adapter initialization")
-		return 1		
+		return 1
 	if not storageAdapter.init():
 		logger.error("Failed storage adaper initialization")
 		return 1		
@@ -169,18 +169,12 @@ def main():
 		if len(args) != 2:
 			parser.error("Command should get 2 arguments - parameter key and value.")
 		success = db.setParameter(args[0], args[1])
-		if not success:
-			return 1
-		return 0
-
+		return 0 if success else 1
 	if options.deleteParameter:
 		if len(args) != 1:
 			parser.error("Command should get a single argument - parameter key.")
 		success = db.deleteParameter(args[0])
-		if not success:
-			return 1
-		return 0
-
+		return 0 if success else 1
 	logger.error("Operation is not set")
 	parser.print_help()
 	parser.error("No operation mode specified")
